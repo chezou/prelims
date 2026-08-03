@@ -84,12 +84,16 @@ class Post(object):
         # https://github.com/yaml/pyyaml/pull/256
         value_types = {type(value) for value in self.front_matter.values()}
         flow_style = None if list in value_types else False
+        # Rewrite the matched span, not every copy of its text, so a body
+        # that quotes the front matter is left alone
+        start, end = m.span(1)
         with open(self.path, 'w', encoding=self.encoding) as f:
-            content = self.raw_content.replace(
-                m.group(1),
-                yaml.dump(self.front_matter, allow_unicode=True,
-                          default_flow_style=flow_style,
-                          sort_keys=False)
+            content = (
+                self.raw_content[:start]
+                + yaml.dump(self.front_matter, allow_unicode=True,
+                            default_flow_style=flow_style,
+                            sort_keys=False)
+                + self.raw_content[end:]
             )
             f.write(content)
 
@@ -106,8 +110,9 @@ class Post(object):
         if m is not None:
             front_matter = yaml.safe_load(m.group(1))
 
-            # remove front matter
-            content = raw_content.replace(m.group(0), '')
+            # remove front matter, by span for the same reason as in save()
+            start, end = m.span(0)
+            content = raw_content[:start] + raw_content[end:]
 
         for re_filter in RE_FILTERS:
             content = re_filter.sub('', content).strip()
