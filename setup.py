@@ -39,12 +39,14 @@ def setup_package():
             'Operating System :: Unix',
             'Operating System :: MacOS',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.7',
-            'Programming Language :: Python :: 3.8',
-            'Programming Language :: Python :: 3.9'
+            'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.11',
+            'Programming Language :: Python :: 3.12',
+            'Programming Language :: Python :: 3.13',
+            'Programming Language :: Python :: 3.14'
         ],
         packages=find_packages(exclude=['*tests*']),
-        python_requires='>=3.7',  # follow sklearn
+        python_requires='>=3.10',
         install_requires=['numpy>=1.14.6', 'scikit_learn>=1.0', 'PyYAML>=5.1'],
     )
 
