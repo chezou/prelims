@@ -25,6 +25,19 @@ draft: true
 This is draft content to be ignored.
 """
 
+# A post that quotes its own front matter in the body
+content_quoting = """
+---
+aaa: xxx
+---
+
+Hello world. Every post starts with:
+
+---
+aaa: xxx
+---
+"""
+
 
 class PostTestCase(TestCase):
 
@@ -40,12 +53,19 @@ class PostTestCase(TestCase):
                                                         delete=False)
         self.mdfile_draft.write(content_draft.encode('utf-8'))
         self.mdfile_draft.seek(0)
+        self.mdfile_quoting = tempfile.NamedTemporaryFile(suffix='.md',
+                                                          dir=self.dir.name,
+                                                          delete=False)
+        self.mdfile_quoting.write(content_quoting.encode('utf-8'))
+        self.mdfile_quoting.seek(0)
 
     def tearDown(self):
         self.mdfile.close()
         os.unlink(self.mdfile.name)
         self.mdfile_draft.close()
         os.unlink(self.mdfile_draft.name)
+        self.mdfile_quoting.close()
+        os.unlink(self.mdfile_quoting.name)
         self.dir.cleanup()
 
     def test_load(self):
@@ -96,4 +116,33 @@ Hello world.
 
         self.assertEqual(
             '\n'.join(self.mdfile.read().decode().splitlines()) + '\n',
+            expected_content)
+
+    def test_load_keeps_quoted_front_matter(self):
+        post = Post.load(self.mdfile_quoting.name, "utf-8")
+        self.assertEqual(post.front_matter, {'aaa': 'xxx'})
+        self.assertEqual(post.content,
+                         'Hello world. Every post starts with:\n\n'
+                         '---\naaa: xxx\n---')
+
+    def test_save_keeps_quoted_front_matter(self):
+        post = Post.load(self.mdfile_quoting.name, "utf-8")
+        post.update('foo', 'bar')
+        post.save()
+
+        expected_content = """
+---
+aaa: xxx
+foo: bar
+---
+
+Hello world. Every post starts with:
+
+---
+aaa: xxx
+---
+"""
+
+        self.assertEqual(
+            '\n'.join(self.mdfile_quoting.read().decode().splitlines()) + '\n',
             expected_content)
